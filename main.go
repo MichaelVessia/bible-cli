@@ -35,7 +35,7 @@ func main() {
 			{
 				Name:    "seed-db",
 				Aliases: []string{"seed"},
-				Usage:   "Seed the database with readings from CSV files in a directory",
+				Usage:   "Seed the database with readings from CSV files in the lectionary directory",
 				Action:  seedDatabase,
 			},
 		},
@@ -65,8 +65,8 @@ func fetchReadings(c *cli.Context, db *sql.DB) error {
 		return nil
 	}
 
-	for i, readings := range readingsList {
-		fmt.Printf("Readings set %d for %s, %s:\n", i+1, date, readings.LiturgicalDate)
+	for _, readings := range readingsList {
+		fmt.Printf("Readings for %s (%s):\n", readings.CalendarDate, readings.LiturgicalDate)
 		fmt.Println("First Reading:", readings.FirstReading)
 		fmt.Println("Psalm Reading:", readings.PsalmReading)
 		fmt.Println("Second Reading:", readings.SecondReading)

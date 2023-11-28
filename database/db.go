@@ -108,7 +108,7 @@ func FetchReadingsForDate(db *sql.DB, date string) ([]Mass, error) {
 	var readingsList []Mass
 
 	// Query the database
-	rows, err := db.Query("SELECT liturgical_date, calendar_date, first_reading, psalm_reading, second_reading, gospel_reading FROM readings WHERE calendar_date = ?", date)
+	rows, err := db.Query("SELECT liturgical_date, calendar_date, first_reading, psalm_reading, second_reading, gospel_reading FROM readings WHERE calendar_date LIKE ?", date+"%")
 	if err != nil {
 		return nil, err
 	}
