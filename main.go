@@ -27,14 +27,14 @@ func main() {
 			{
 				Name:    "fetch",
 				Aliases: []string{"f"},
-				Usage:   "Fetch readings for a specific date",
+				Usage:   "Fetch readings for a date. Supports full dates like 2023-11-28 or partial dates like 2023-11",
 				Action: func(c *cli.Context) error {
 					return fetchReadings(c, db)
 				},
 			},
 			{
 				Name:    "seed-db",
-				Aliases: []string{"seed"},
+				Aliases: []string{"sd"},
 				Usage:   "Seed the database with readings from CSV files in the lectionary directory",
 				Action:  seedDatabase,
 			},
