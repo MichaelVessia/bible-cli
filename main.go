@@ -32,6 +32,12 @@ func main() {
 					return fetchReadings(c, db)
 				},
 			},
+			{
+				Name:    "seed-db",
+				Aliases: []string{"seed"},
+				Usage:   "Seed the database with readings from CSV files in a directory",
+				Action:  seedDatabase,
+			},
 		},
 	}
 
@@ -68,5 +74,15 @@ func fetchReadings(c *cli.Context, db *sql.DB) error {
 		fmt.Println()
 	}
 
+	return nil
+}
+
+func seedDatabase(c *cli.Context) error {
+	if err := database.SeedDb(); err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	fmt.Println("Database seeded successfully.")
 	return nil
 }

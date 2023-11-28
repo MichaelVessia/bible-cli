@@ -3,53 +3,78 @@ package database
 import (
 	"database/sql"
 	"encoding/csv"
-	_ "github.com/mattn/go-sqlite3"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func SeedDb() error {
-	// Open the SQLite database
 	db, err := sql.Open("sqlite3", "./bibleReadings.db")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	defer db.Close()
 
-	// Setup the database schema
 	if err := CreateDb(db); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// Open the CSV file
-	csvFile, err := os.Open("./Year_C_2021-2022.csv")
+	directory := "./lectionary/"
+
+	// Read all files in the directory
+	files, err := ioutil.ReadDir(directory)
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".csv") {
+			csvFilePath := filepath.Join(directory, file.Name())
+			if err := seedFromFile(db, csvFilePath); err != nil {
+				log.Printf("Error seeding from file %s: %v", csvFilePath, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func seedFromFile(db *sql.DB, csvFilePath string) error {
+	csvFile, err := os.Open(csvFilePath)
+	if err != nil {
+		return err
 	}
 	defer csvFile.Close()
 
-	// Create a new CSV reader from the file
 	reader := csv.NewReader(csvFile)
 
-	// Read the CSV data
+	// Toss the first row since it's header info
+	reader.Read()
 	for {
 		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			log.Fatal(err)
+			return err
 		}
 
-		// Insert the data into the SQLite database
-		// Adjust the SQL statement according to your table's schema
+		if rowExists(db, row[0]) {
+			log.Printf("Skipped seeding %s, already had data for %s", csvFilePath, row[0])
+			continue // Skip if the row already exists
+		}
+
 		_, err = db.Exec("INSERT INTO readings (liturgical_date, calendar_date, first_reading, psalm_reading, second_reading, gospel_reading) VALUES (?, ?, ?, ?, ?, ?)", row[0], row[1], row[2], row[3], row[4], row[5])
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 func CreateDb(db *sql.DB) error {
@@ -102,4 +127,14 @@ func FetchReadingsForDate(db *sql.DB, date string) ([]Mass, error) {
 	}
 
 	return readingsList, nil
+}
+
+func rowExists(db *sql.DB, liturgicalDate string) bool {
+	var exists bool
+	query := "SELECT EXISTS(SELECT 1 FROM readings WHERE liturgical_date = ? LIMIT 1)"
+	err := db.QueryRow(query, liturgicalDate).Scan(&exists)
+	if err != nil && err != sql.ErrNoRows {
+		log.Fatal(err)
+	}
+	return exists
 }
