@@ -78,11 +78,12 @@ func fetchReadings(c *cli.Context, db *sql.DB) error {
 }
 
 func seedDatabase(c *cli.Context) error {
-	if err := database.SeedDb(); err != nil {
+	rowsInserted, err := database.SeedDb()
+	if err != nil {
 		log.Fatal(err)
 		return err
 	}
 
-	fmt.Println("Database seeded successfully.")
+	fmt.Printf("Database seeded without error, added %v rows.\n", rowsInserted)
 	return nil
 }
